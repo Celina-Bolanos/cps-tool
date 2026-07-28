@@ -66,7 +66,7 @@ if uploaded_file is not None:
     if st.session_state.show_po_form:
         supplier = st.selectbox(
             'Select supplier', 
-            options=['Select supplier', 'Operadora Pajarito', 'Taller Don Jose']
+            options=['Select supplier', 'Operadora Pajarito', 'Taller Don Jose', 'AET', 'Carcenter', 'ICO', 'MSE']
         )
         
         if supplier != 'Select supplier':
