@@ -3,8 +3,8 @@ import pandas as pd
 from pathlib import Path
 
 SCRIPT_DIR = Path(__file__).parent
-ACCESSORIES_DB = SCRIPT_DIR / 'databases/ACCESSORIESCODES_DATABASE.csv'
-ITEMS_DB = SCRIPT_DIR / 'databases/ITEMS_DATABASE.csv'
+ACCESSORIES_DB = SCRIPT_DIR / 'databases' / 'ACCESSORIESCODES_DATABASE.csv'
+ITEMS_DB = SCRIPT_DIR / 'databases' / 'ITEMS_DATABASE.csv'
 
 MASTER_MAPPING = {
     "cvn_number_cell": "B4",

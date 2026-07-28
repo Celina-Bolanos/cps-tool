@@ -7,7 +7,7 @@ from copy import copy
 from openpyxl.utils.cell import range_boundaries
 
 SCRIPT_DIR = Path(__file__).parent
-TEMPLATE_PATH = SCRIPT_DIR / 'po_templates/po_template.xlsx'
+TEMPLATE_PATH = SCRIPT_DIR / 'po_templates' / 'po_template.xlsx'
 
 MASTER_MAPPING_PO = {
     "cvn_number_cell": "B4",
