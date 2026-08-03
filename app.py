@@ -12,7 +12,8 @@ from utils.po_generator import(
     MASTER_MAPPING_PO,
     TEMPLATE_PATH,
     collect_data, 
-    fill_template
+    fill_template,
+    vendor_data
 )
 
 # --- STREAMLIT WEB INTERFACE ---
@@ -66,7 +67,7 @@ if uploaded_file is not None:
     if st.session_state.show_po_form:
         supplier = st.selectbox(
             'Select supplier', 
-            options=['Select supplier', 'Operadora Pajarito', 'Taller Don Jose', 'AET', 'Carcenter', 'ICO', 'MSE']
+            options=['Select supplier', 'AET', 'Carcenter', 'ICO', 'MSE']
         )
         
         if supplier != 'Select supplier':
@@ -74,6 +75,7 @@ if uploaded_file is not None:
             st.write('Generating Purchase Order...')
 
             try:
+                vendor_data(supplier)
                 collected_data, accessories_dict, num_rows = collect_data(uploaded_file, MASTER_MAPPING_PO)
                 ref_num = collected_data.get('cvn_num', 'UNKNOWN')
                 

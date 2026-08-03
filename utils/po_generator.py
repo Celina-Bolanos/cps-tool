@@ -29,6 +29,22 @@ TALLER_DON_JOSE = {'name':'Taller Don Jose',
                       'address':'Rupelmondestraat 17, \n 9150 Bazel',
                       'price': 70}
 
+# Function to select supplier data from database
+def vendor_data(subcontractor_name: str) -> dict:
+    ''' Reads subcontractors data and extract the data for the selected supplier
+    Args
+        subcontractor_name - str: name of the selected subcontractor
+
+    Returns
+        vendor_data - dict: all de details for the selected supplier
+
+    '''
+    subcontractors = pd.read_excel(SCRIPT_DIR.parent / 'data' / 'subcontractors.xlsx', sheet_name='Ext_services')
+    subcontractor_data = subcontractors[subcontractors['name'] == subcontractor_name]
+
+    print(subcontractor_data)
+    return subcontractor_data
+
 
 # Function to copy/paste the formating of a row
 def copy_row_format(ws, source_row: int, target_row: int):
