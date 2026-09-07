@@ -3,8 +3,8 @@ import pandas as pd
 from pathlib import Path
 
 SCRIPT_DIR = Path(__file__).parent
-ACCESSORIES_DB = SCRIPT_DIR / 'databases' / 'ACCESSORIESCODES_DATABASE.csv'
-ITEMS_DB = SCRIPT_DIR / 'databases' / 'ITEMS_DATABASE.csv'
+ACCESSORIES_DB = SCRIPT_DIR.parent / 'data' / 'ACCESSORIESCODES_DATABASE.csv'
+ITEMS_DB = SCRIPT_DIR.parent / 'data' / 'ITEMS_DATABASE.csv'
 
 MASTER_MAPPING = {
     "cvn_number_cell": "B4",
@@ -141,7 +141,6 @@ def xlookup_items(scan_list: pd.DataFrame) -> pd.DataFrame:
     scan_list['barcode'] = scan_list['barcode'].astype(str)  # Ensure barcode is string for mapping
     scan_list['accessory_code'] = scan_list['barcode'].map(items.set_index('barcode')['full_description']) # Perform xlookup   
 
-    ref_num = scan_list.iloc[0,0].split()[-4:][0]
-    ref_num = f'{ref_num[:3]}-{ref_num[-4:]}'
+    ref_num = scan_list.iloc[0,0]
 
     return scan_list, ref_num

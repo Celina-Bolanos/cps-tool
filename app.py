@@ -17,8 +17,8 @@ from utils.po_generator import(
 )
 
 # --- STREAMLIT WEB INTERFACE ---
-st.set_page_config(page_title='Worksheet Processing Tool', page_icon='📝')
-st.title('📝 Worksheet Processing Tool')
+st.set_page_config(page_title='CPS Processing Tool', page_icon='📝')
+st.title('📝 CPS Processing Tool')
 st.write('Testing the automation of scan list and PO creation.')
 
 
@@ -76,10 +76,10 @@ if uploaded_file is not None:
 
             try:
                 vendor_data(supplier)
-                collected_data, accessories_dict, num_rows = collect_data(uploaded_file, MASTER_MAPPING_PO)
+                collected_data, accessories_dict, num_rows, vins_ors_dict = collect_data(uploaded_file, MASTER_MAPPING_PO)
                 ref_num = collected_data.get('cvn_num', 'UNKNOWN')
                 
-                new_po_stream = fill_template(TEMPLATE_PATH, supplier, collected_data, accessories_dict, num_rows)
+                new_po_stream = fill_template(TEMPLATE_PATH, supplier, collected_data, accessories_dict, vins_ors_dict)
                 #new_po_stream = fill_template(TEMPLATE_PATH, collected_data, accessories_dict, num_rows)
 
                 # Offer the file back to the browser for instant download
