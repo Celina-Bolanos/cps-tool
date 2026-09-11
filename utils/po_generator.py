@@ -265,8 +265,6 @@ def collect_data(uploaded_ws, mapping: dict) -> pd.DataFrame:
                 vins_row += 1 # Go to next row
     
 
-    print(vins_ors_dict)
-    print(len(vins_ors_dict))
     return collected_data, accessories_dict, num_rows, vins_ors_dict
 
 
@@ -295,7 +293,7 @@ def fill_template(TEMPLATE_PATH: str, supplier: str, collected_data: dict, acces
     po_template['B7'] = f"{subcontractor_data['address_1'].iloc[0]}\n{subcontractor_data['address_2'].iloc[0]}"
     po_template['L4'] = datetime.now().strftime('%d/%m/%Y')
     po_template['L8'] = collected_data['cvn_num']
-    po_template['B13'] = f"{collected_data['vehicles_qty']}x {collected_data['model_name']} \n {collected_data['model_code']}"
+    po_template['B13'] = f"{collected_data['vehicles_qty']}x TOY {collected_data['model_name']} \n {collected_data['model_code']}"
     po_template['K19'] = subcontractor_data['hourly_rate'].iloc[0]
 
     # 3. Determine and add new rows if needed for the OR/VIN numbers
@@ -324,7 +322,6 @@ def fill_template(TEMPLATE_PATH: str, supplier: str, collected_data: dict, acces
 
         
     # 4. Fill in VIN numbers
-    # --- 3. LAYOUT SPECIFICATIONS FOR MULTI-COLUMN MATCHING ---
     vins_row_start = 13
     max_rows_per_col = 3 + extra_rows_vins  # Total physical rows available per column block
 
@@ -336,7 +333,7 @@ def fill_template(TEMPLATE_PATH: str, supplier: str, collected_data: dict, acces
         (11, 13, 14) # Group 3: VINs in K-M (11-13), OR in N (14)
     ]
 
-    # --- 4. POPULATE DATA VERTICALLY THEN HORIZONTALLY ---
+    # 5. POPULATE DATA VERTICALLY THEN HORIZONTALLY
     # Loop through the dictionary items (vin, or) extracted previously
     for idx, (vin_num, or_num) in enumerate(vins_ors_dict.items()):
 
@@ -374,10 +371,15 @@ def fill_template(TEMPLATE_PATH: str, supplier: str, collected_data: dict, acces
     if  total_items> 4:
         extra_rows_items = total_items - 4
         adjust_rows(po_template, rows_to_add=extra_rows_items, base_row=23 + extra_rows_vins)
+    else:
+        extra_rows_items = 0
 
     
     # Now fill accessories list as of row 20 + extra added rows in the VINs area
     start_row = 20 + extra_rows_vins
+
+    # Define variable to collect intallation costs per item
+    total_per_item_list = []
     
     for idx, (key, item_data) in enumerate(accessories_dict.items()):
         current_target_row = start_row + idx
@@ -392,6 +394,7 @@ def fill_template(TEMPLATE_PATH: str, supplier: str, collected_data: dict, acces
         supplier_price = subcontractor_data['hourly_rate'].iloc[0]
         price_vin = fitting_time * supplier_price
         total = fitting_time * supplier_price * collected_data['vehicles_qty']
+        total_per_item_list.append(total) # Add price to list of instalattion costs
         
         # Write to specific columns based on your template's layout
         # (Remember: use the top-left cell coordinate if the column is merged!)
@@ -412,7 +415,26 @@ def fill_template(TEMPLATE_PATH: str, supplier: str, collected_data: dict, acces
             total  = '-'
         else:
             total = total
-#
+
+    # Calculate row number for PO subtotal with base row 27
+    subtotal_row = 27 + extra_rows_vins + extra_rows_items
+    subtotal_cell = f'L{subtotal_row}'
+
+    # Add fill in subtotal cell with total installation costs
+    subtotal = sum(total_per_item_list)
+    po_template[subtotal_cell] = subtotal
+
+    # Calculate VAT
+    vat_row = subtotal_row + 3 # first row below total
+    vat_cell = f'L{vat_row}'
+    vat = 0 # subtotal  * 0.21 #vat yet to be calculated
+    #po_template[vat_cell] = 
+
+    # Calculate PO grand total
+    grand_total_row = vat_row + 3 # row below vat
+    grand_total_cell = f'L{grand_total_row}'
+    po_template[grand_total_cell] = subtotal + vat
+
     # Convert to 
     po_stream = io.BytesIO()
     po_temp_wb.save(po_stream)

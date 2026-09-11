@@ -11,6 +11,7 @@ MASTER_MAPPING = {
     "total_vehicles_cell": "P6",    # Total cars on the job
     "accessory_start_row": 10,
     "accessory_code_col" : 2, # Column B
+    "qty_per_vin" : 3, # Col C
     'total_qty_col' : 4 # Col D
 }
 
@@ -77,6 +78,7 @@ def read_ws(uploaded_ws, mapping: dict) -> pd.DataFrame:
         "accessory_code": list(accessory_codes_dict.keys()),
         "vehicles_qty": list(accessory_codes_dict.values())
     })
+    print(base_scan_list)
     
     return base_scan_list
 
