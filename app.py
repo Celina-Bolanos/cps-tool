@@ -2,6 +2,7 @@ import streamlit as st
 from openpyxl import load_workbook
 import io
 import os
+import pandas as pd
 from utils.scanlist_maker import (
     read_ws, 
     MASTER_MAPPING, 
@@ -16,25 +17,27 @@ from utils.po_generator import(
     vendor_data
 )
 
+from utils.display import show_services
+
 # --- STREAMLIT WEB INTERFACE ---
 st.set_page_config(page_title='CPS Processing Tool', page_icon='📝')
 st.title('📝 CPS Processing Tool')
 st.write('Testing the automation of scan list and PO creation.')
 
 
-# 1. File Upload Box
+# File Upload Box
 uploaded_file = st.file_uploader('Upload your Worksheet (.xlsx)', type=['xlsx'])
 
-# 2. Initialize session state for showing the PO form
+# Initialize session state for showing the PO form
 if 'show_po_form' not in st.session_state:
     st.session_state.show_po_form = False
 
-# 3. Process Execution
+# Process Execution
 if uploaded_file is not None:
-    st.success('Master worksheet loaded successfully!')
+    st.success('Worksheet loaded successfully!')
     st.write('What would you like to do?')
 
-# 4. Make Scan List     
+# Make Scan List     
     if st.button('🚀 Make Scan list', use_container_width=True):
         try:
             # Run worksheet reading function
@@ -59,7 +62,7 @@ if uploaded_file is not None:
         except Exception as e:
             st.error(f'An unexpected error occurred: {e}')
 
-# 5. Make Purchase Order        
+# Make Purchase Order        
     if st.button('🚀 Make Purchase Order', use_container_width=True):
         st.session_state.show_po_form = True
 
@@ -72,10 +75,24 @@ if uploaded_file is not None:
         
         if supplier != 'Select supplier':
             st.write(f'You selected: **{supplier}**')
-            st.write('Generating Purchase Order...')
+            #st.write('Generating Purchase Order...')
 
             try:
-                vendor_data(supplier)
+                subcontractor_data, ext_services = vendor_data(supplier)
+
+                # Drop unnecessary rows:
+                services = ext_services[['Ext_Service', 'Deffault']]
+                services = services.set_index('Ext_Service')['Deffault'].to_dict()
+                print(services)
+                print(type(services))
+
+
+
+
+            
+
+
+
                 collected_data, accessories_dict, num_rows, vins_ors_dict = collect_data(uploaded_file, MASTER_MAPPING_PO)
                 ref_num = collected_data.get('cvn_num', 'UNKNOWN')
                 

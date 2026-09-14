@@ -39,7 +39,6 @@ def vendor_data(subcontractor_name: str) -> dict:
     subcontractor_prices = pd.read_excel(SCRIPT_DIR.parent / 'data' / 'subcontractors.xlsx', sheet_name='Ext_services')
     subcontractor_prices = subcontractor_prices[subcontractor_prices['name'] == subcontractor_name]
 
-
     return subcontractor_data, subcontractor_prices
 
 
