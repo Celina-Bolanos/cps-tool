@@ -447,7 +447,7 @@ def fill_template(TEMPLATE_PATH: str, supplier: str, collected_data: dict, acces
 
             qty = service_data.get('qty_vin')
             price = service_data.get('Price')
-            total_service = price * total_vins
+            total_service = price * qty * total_vins
             
 
             po_template.cell(row=current_target_row, column=2).value = 'Ext. Service'
