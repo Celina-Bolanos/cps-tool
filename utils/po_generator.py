@@ -6,6 +6,7 @@ from datetime import datetime
 from copy import copy
 from openpyxl.utils import range_boundaries
 from openpyxl.styles import Alignment
+from .display import show_services
 
 SCRIPT_DIR = Path(__file__).parent
 TEMPLATE_PATH = SCRIPT_DIR / 'po_templates' / 'po_template.xlsx'
@@ -36,10 +37,11 @@ def vendor_data(subcontractor_name: str) -> dict:
     subcontractor_data = pd.read_excel(SCRIPT_DIR.parent / 'data' / 'subcontractors.xlsx', sheet_name='Subcontractors')
     subcontractor_data = subcontractor_data[subcontractor_data['name'] == subcontractor_name]
 
-    subcontractor_prices = pd.read_excel(SCRIPT_DIR.parent / 'data' / 'subcontractors.xlsx', sheet_name='Ext_services')
-    subcontractor_prices = subcontractor_prices[subcontractor_prices['name'] == subcontractor_name]
+    ext_services = pd.read_excel(SCRIPT_DIR.parent / 'data' / 'subcontractors.xlsx', sheet_name='Ext_services')
+    ext_services = ext_services[ext_services['name'] == subcontractor_name]
+    
 
-    return subcontractor_data, subcontractor_prices
+    return subcontractor_data, ext_services
 
 
 # Function to copy/paste the formating of a row
@@ -200,6 +202,8 @@ def collect_data(uploaded_ws, mapping: dict) -> pd.DataFrame:
         # Add mapping to CPS Stickers
     }
 
+
+
     # 3. Read worksheet, find and count number of accessories and description
     current_row = MASTER_MAPPING_PO["accessory_start_row"] #Start checking on row 10
     accessories_dict = {}  # Dictionary to hold accessory codes and their descriptions
@@ -277,6 +281,7 @@ def fill_template(TEMPLATE_PATH: str, supplier: str, collected_data: dict, acces
         collected_data (dict): Dictionary containing header details.
         accessories_dict (dict): Dictionary containing accessory details.
         num_rows (int): Number of accessory rows.
+        ############ ext_services: list of the services selected by the user
     Returns:
         filled_template: The filled template document.
     '''
@@ -284,10 +289,23 @@ def fill_template(TEMPLATE_PATH: str, supplier: str, collected_data: dict, acces
     po_temp_wb = load_workbook(TEMPLATE_PATH, data_only=True)
     po_template = po_temp_wb.active
 
-    subcontractor_data, subcontractor_prices = vendor_data(supplier)
+    # 2. Get subcontractor data and selected ext_services:
+    subcontractor_data, ext_services = vendor_data(supplier)
+
+    # Drop unnecessary rows from ext_services:
+    services = ext_services[['Ext_Service', 'Deffault']]
+
+    # Display and get list of selected services
+    selected_services = show_services(services)
+
+    # Subset Ext_services to only those selected by the user
+    ext_services = ext_services[ext_services['Ext_Service'].isin(selected_services)]
+
+    # Get only the necessary cols
+    ext_services = ext_services[['Ext_Service', 'qty_vin', 'Price']]
     
     
-    # 2. Fill in the header details
+    # 3. Fill in the header details
     po_template['B6'] = subcontractor_data['name_long'].iloc[0]
     po_template['B7'] = f"{subcontractor_data['address_1'].iloc[0]}\n{subcontractor_data['address_2'].iloc[0]}"
     po_template['L4'] = datetime.now().strftime('%d/%m/%Y')
@@ -295,7 +313,7 @@ def fill_template(TEMPLATE_PATH: str, supplier: str, collected_data: dict, acces
     po_template['B13'] = f"{collected_data['vehicles_qty']}x TOY {collected_data['model_name']} \n {collected_data['model_code']}"
     po_template['K19'] = subcontractor_data['hourly_rate'].iloc[0]
 
-    # 3. Determine and add new rows if needed for the OR/VIN numbers
+    # 4. Determine and add new rows if needed for the OR/VIN numbers
     total_vins = collected_data['vehicles_qty']
     
     if total_vins >= 10:
@@ -320,7 +338,7 @@ def fill_template(TEMPLATE_PATH: str, supplier: str, collected_data: dict, acces
             po_template.cell(row=r_idx, column=2).alignment = merged_cell_alignment
 
         
-    # 4. Fill in VIN numbers
+    # 5. Fill in VIN numbers
     vins_row_start = 13
     max_rows_per_col = 3 + extra_rows_vins  # Total physical rows available per column block
 
@@ -332,7 +350,7 @@ def fill_template(TEMPLATE_PATH: str, supplier: str, collected_data: dict, acces
         (11, 13, 14) # Group 3: VINs in K-M (11-13), OR in N (14)
     ]
 
-    # 5. POPULATE DATA VERTICALLY THEN HORIZONTALLY
+    # Populate data vertically then horizontally
     # Loop through the dictionary items (vin, or) extracted previously
     for idx, (vin_num, or_num) in enumerate(vins_ors_dict.items()):
 
@@ -364,16 +382,16 @@ def fill_template(TEMPLATE_PATH: str, supplier: str, collected_data: dict, acces
         po_template.cell(row=target_row, column=or_col, value=or_num)
 
 
+    # 6. Determine and add new rows if needed for the items
+    total_lines = len(accessories_dict) + len(ext_services)
 
-    # 5. Determine and add new rows if needed for the items
-    total_items = len(accessories_dict)
-    if  total_items> 4:
-        extra_rows_items = total_items - 4
+    if  total_lines> 4:
+        extra_rows_items = total_lines - 4
         adjust_rows(po_template, rows_to_add=extra_rows_items, base_row=23 + extra_rows_vins)
     else:
         extra_rows_items = 0
 
-    
+
     # Now fill accessories list as of row 20 + extra added rows in the VINs area
     start_row = 20 + extra_rows_vins
 
@@ -393,10 +411,10 @@ def fill_template(TEMPLATE_PATH: str, supplier: str, collected_data: dict, acces
         supplier_price = subcontractor_data['hourly_rate'].iloc[0]
         price_vin = fitting_time * supplier_price
         total = fitting_time * supplier_price * collected_data['vehicles_qty']
+
         total_per_item_list.append(total) # Add price to list of instalattion costs
         
-        # Write to specific columns based on your template's layout
-        # (Remember: use the top-left cell coordinate if the column is merged!)
+        # Write to specific columns based on template's layout
         po_template.cell(row=current_target_row, column=2).value = acc_code
         po_template.cell(row=current_target_row, column=3).value = acc_desc
         po_template.cell(row=current_target_row, column=9).value = qty_vin     # Column I
@@ -414,6 +432,48 @@ def fill_template(TEMPLATE_PATH: str, supplier: str, collected_data: dict, acces
             total  = '-'
         else:
             total = total
+
+    #print(ext_services)
+
+    # Once items have been added, fill in external_services (if any)
+    # Determine where to start
+
+    if len(ext_services) > 0:
+        ext_services = ext_services.set_index('Ext_Service').to_dict(orient='index')
+
+        current_target_row = start_row + len(accessories_dict)
+
+        for idx, (key, service_data) in enumerate(ext_services.items()):
+
+            qty = service_data.get('qty_vin')
+            price = service_data.get('Price')
+            total_service = price * total_vins
+            
+
+            po_template.cell(row=current_target_row, column=2).value = 'Ext. Service'
+            po_template.cell(row=current_target_row, column=3).value = key
+            po_template.cell(row=current_target_row, column=9).value = qty
+            po_template.cell(row=current_target_row, column=10).value = '-'
+            po_template.cell(row=current_target_row, column=11).value = price
+            po_template.cell(row=current_target_row, column=12).value = total_service
+
+            total_per_item_list.append(total_service)
+
+            current_target_row += 1
+
+
+
+
+        #for idx, row in enumerate(ext_services.itertuples(index=False)):
+        #    # Calculate the exact Excel row dynamically
+        #    current_target_row = start_row + idx
+        #    print(idx, row)
+        #
+        #    po_template.cell(row=current_target_row, column=2).value = 'Ext. Service'
+
+        
+
+
 
     # Calculate row number for PO subtotal with base row 27
     subtotal_row = 27 + extra_rows_vins + extra_rows_items

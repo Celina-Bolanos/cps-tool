@@ -78,26 +78,28 @@ if uploaded_file is not None:
             #st.write('Generating Purchase Order...')
 
             try:
-                subcontractor_data, ext_services = vendor_data(supplier)
+                #subcontractor_data, ext_services = vendor_data(supplier)
+#
+                ## Drop unnecessary rows:
+                #services = ext_services[['Ext_Service', 'Deffault']]
+#
+                ## Display and get list of selected services
+                #selected_services = show_services(services)
+#
+                ## Subset Ext services to only those selected by the user
+                #ext_services = ext_services[ext_services['Ext_Service'].isin(selected_services)]
+#
+                ## Get only the necessary cols
+                #ext_services = ext_services[['Ext_Service', 'qty_vin', 'Price']]
 
-                # Drop unnecessary rows:
-                services = ext_services[['Ext_Service', 'Deffault']]
-                services = services.set_index('Ext_Service')['Deffault'].to_dict()
-                print(services)
-                print(type(services))
 
 
-
-
-            
-
-
-
+                ### Basic PO creation code here:
                 collected_data, accessories_dict, num_rows, vins_ors_dict = collect_data(uploaded_file, MASTER_MAPPING_PO)
                 ref_num = collected_data.get('cvn_num', 'UNKNOWN')
                 
                 new_po_stream = fill_template(TEMPLATE_PATH, supplier, collected_data, accessories_dict, vins_ors_dict)
-                #new_po_stream = fill_template(TEMPLATE_PATH, collected_data, accessories_dict, num_rows)
+                #new_po_stream = fill_template(TEMPLATE_PATH, supplier, collected_data, accessories_dict, vins_ors_dict)
 
                 # Offer the file back to the browser for instant download
                 st.download_button(

@@ -1,26 +1,27 @@
 import streamlit as st
+import pandas as pd
 
-def show_services(services: dict, vendor_data: dict):
+def show_services(services) -> list:
     '''
     Displays the Ext. Services of the supplier and returns the vendor's data dict
     with the services that are to be added to the purchase order.
     '''
 
-    #Create a sub-dictionary or list inside vendor_data to hold the chosen services
-    vendor_data['selected_services'] = []
+    services = services.to_dict()
 
-    for key, val in services.items():
-        # Set the starting state based on your services dict
-        default_value = False if val == 'no' else True
-        
-        # Capture the live user interaction (True/False)
-        is_ticked = st.checkbox(label=key, value=default_value)
-        
-        # If the user checked it, save it to the vendor_data
+    # Create an empty list to hold the services the user ticks
+    selected_services = []
+
+    for i in services['Ext_Service']:
+        service = services['Ext_Service'][i]
+        default = services['Deffault'][i]
+
+        is_ticked = st.checkbox(label=service, value=default)
+
         if is_ticked:
-            vendor_data['selected_services'].append(key)
+            selected_services.append(service)
 
-    # Return the updated dictionary
-    return vendor_data
+    # Return the selected services list
+    return selected_services
 
     
