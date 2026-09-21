@@ -236,10 +236,10 @@ def collect_data(uploaded_ws, mapping: dict) -> pd.DataFrame:
             }
             current_row += 1
    
-        if len(accessories_dict) != 0:
-            num_rows = len(accessories_dict)
-        else:
-            num_rows = 0
+    if len(accessories_dict) != 0:
+        num_rows = len(accessories_dict)
+    else:
+        num_rows = 0
 
     # 4. Find and save the VIN numbers + OR numbers
 
