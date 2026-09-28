@@ -24,7 +24,6 @@ st.set_page_config(page_title='CPS Processing Tool', page_icon='📝')
 st.title('📝 CPS Processing Tool')
 #st.write('Testing the automation of scan list and PO creation.')
 st.write('Welcome!')
-st.write('How you doing, papi?!')
 
 
 # File Upload Box
