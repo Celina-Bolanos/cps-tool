@@ -22,7 +22,8 @@ from utils.display import show_services
 # --- STREAMLIT WEB INTERFACE ---
 st.set_page_config(page_title='CPS Processing Tool', page_icon='📝')
 st.title('📝 CPS Processing Tool')
-st.write('Testing the automation of scan list and PO creation.')
+#st.write('Testing the automation of scan list and PO creation.')
+st.write('Welcome!')
 
 
 # File Upload Box
@@ -78,22 +79,6 @@ if uploaded_file is not None:
             #st.write('Generating Purchase Order...')
 
             try:
-                #subcontractor_data, ext_services = vendor_data(supplier)
-#
-                ## Drop unnecessary rows:
-                #services = ext_services[['Ext_Service', 'Deffault']]
-#
-                ## Display and get list of selected services
-                #selected_services = show_services(services)
-#
-                ## Subset Ext services to only those selected by the user
-                #ext_services = ext_services[ext_services['Ext_Service'].isin(selected_services)]
-#
-                ## Get only the necessary cols
-                #ext_services = ext_services[['Ext_Service', 'qty_vin', 'Price']]
-
-
-
                 ### Basic PO creation code here:
                 collected_data, accessories_dict, num_rows, vins_ors_dict = collect_data(uploaded_file, MASTER_MAPPING_PO)
                 ref_num = collected_data.get('cvn_num', 'UNKNOWN')
