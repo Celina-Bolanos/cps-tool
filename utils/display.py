@@ -1,5 +1,5 @@
 import streamlit as st
-import pandas as pd
+#import pandas as pd
 
 def show_services(services) -> list:
     '''
