@@ -78,8 +78,8 @@ def read_ws(uploaded_ws, mapping: dict) -> pd.DataFrame:
         "accessory_code": list(accessory_codes_dict.keys()),
         "vehicles_qty": list(accessory_codes_dict.values())
     })
+    print('BASE SCAN LIST')
     print(base_scan_list)
-    
     return base_scan_list
 
 
@@ -95,6 +95,7 @@ def xlookup_accessories(base_scan_list: pd.DataFrame) -> pd.DataFrame:
     scan_list (pd.DataFrame): Updated DataFrame with the barcode information added.
    
     '''
+
     # Load accessories database file
     accessories = pd.read_csv(ACCESSORIES_DB, 
                               sep=';', 
@@ -104,13 +105,18 @@ def xlookup_accessories(base_scan_list: pd.DataFrame) -> pd.DataFrame:
     accessories = accessories.drop(columns=['drop_this', 'barcode_2']) # Drop the empty col
     accessories = accessories.dropna(subset=['item_code']) # Drop rows with empty item_code
 
+    print('Accesories DB dtypes:')
+    print(accessories.dtypes)
+
     # Drop rows with duplicated item_codes, as this prevents the xlookup from working
     accessories = accessories.drop_duplicates(subset=['item_code'])
-
+    
     # Now that the accessories database is imported and cleaned, perform xlookup
     base_scan_list['barcode'] = base_scan_list['accessory_code'].astype(str).map(accessories.set_index('item_code')['barcode']).fillna(base_scan_list['accessory_code'])
-   
     base_scan_list['barcode'] = base_scan_list['barcode'].astype(str).str.replace('.0', '', regex=False)  # Remove .0 from barcodes
+
+    print('Scan list with BARCODE')
+    print(base_scan_list)
 
     return base_scan_list
 
@@ -144,5 +150,8 @@ def xlookup_items(scan_list: pd.DataFrame) -> pd.DataFrame:
     scan_list['accessory_code'] = scan_list['barcode'].map(items.set_index('barcode')['full_description']) # Perform xlookup   
 
     ref_num = scan_list.iloc[0,0]
+
+    print('FINAL SCAN LIST')
+    print(scan_list)
 
     return scan_list, ref_num

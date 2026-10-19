@@ -397,13 +397,9 @@ def fill_template(TEMPLATE_PATH: str, supplier: str, collected_data: dict, acces
 
     # Now fill accessories list as of row 20 + extra added rows in the VINs area
     start_row = 20 + extra_rows_vins
-
-    # Define variable to collect intallation costs per item
-    total_per_item_list = []
     
     for idx, (key, item_data) in enumerate(accessories_dict.items()):
         current_target_row = start_row + idx
-    # item_data = dict of each accessory. Eg 3585 : {'description': 'Pintle hook'}
 
         # Define variable to be able to refer to them later.
         # At least supplier fitting_time needs a variable name to then be added
@@ -414,8 +410,6 @@ def fill_template(TEMPLATE_PATH: str, supplier: str, collected_data: dict, acces
         supplier_price = subcontractor_data['hourly_rate'].iloc[0]
         price_vin = fitting_time * supplier_price
         total = fitting_time * supplier_price * collected_data['vehicles_qty']
-
-        total_per_item_list.append(total) # Add price to list of instalattion costs
         
         # Write to specific columns based on template's layout
         po_template.cell(row=current_target_row, column=2).value = acc_code
@@ -425,18 +419,11 @@ def fill_template(TEMPLATE_PATH: str, supplier: str, collected_data: dict, acces
         po_template.cell(row=current_target_row, column=11).value = price_vin
         po_template.cell(row=current_target_row, column=12).value = total 
 
-        # Fix unit price if fitting time == '-'
-        if type(price_vin) == str:
-            price_vin = '-'
+        # Fix unit price if fitting time == '0'
+        if item_data['fitting_time'] == 0:
+            po_template.cell(row=current_target_row, column=10).value = '-'
         else:
             price_vin = price_vin
-        # Fix total price if fitting time == '-'
-        if type(total) == str:
-            total  = '-'
-        else:
-            total = total
-
-    #print(ext_services)
 
     # Once items have been added, fill in external_services (if any)
     # Determine where to start
@@ -452,7 +439,6 @@ def fill_template(TEMPLATE_PATH: str, supplier: str, collected_data: dict, acces
             price = service_data.get('Price')
             total_service = price * qty * total_vins
             
-
             po_template.cell(row=current_target_row, column=2).value = 'Ext. Service'
             po_template.cell(row=current_target_row, column=3).value = key
             po_template.cell(row=current_target_row, column=9).value = qty
@@ -460,21 +446,14 @@ def fill_template(TEMPLATE_PATH: str, supplier: str, collected_data: dict, acces
             po_template.cell(row=current_target_row, column=11).value = price
             po_template.cell(row=current_target_row, column=12).value = total_service
 
-            total_per_item_list.append(total_service)
+            if service_data['qty_vin'] == 0:
+                po_template.cell(row=current_target_row, column=9).value = "-"
+                po_template.cell(row=current_target_row, column=12).value = price
+
+                if key == 'Weighing and measuring':
+                    po_template.cell(row=current_target_row, column=13).value = 'For 1 vehicle'
 
             current_target_row += 1
-
-
-
-
-        #for idx, row in enumerate(ext_services.itertuples(index=False)):
-        #    # Calculate the exact Excel row dynamically
-        #    current_target_row = start_row + idx
-        #    print(idx, row)
-        #
-        #    po_template.cell(row=current_target_row, column=2).value = 'Ext. Service'
-
-        
 
 
 
@@ -482,20 +461,23 @@ def fill_template(TEMPLATE_PATH: str, supplier: str, collected_data: dict, acces
     subtotal_row = 27 + extra_rows_vins + extra_rows_items
     subtotal_cell = f'L{subtotal_row}'
 
-    # Add fill in subtotal cell with total installation costs
-    subtotal = sum(total_per_item_list)
+    # Calculate the last row that contain costs
+    last_service_row = 23 + extra_rows_vins + extra_rows_items
+
+    # Fill in subtotal cell with total installation costs formula
+    subtotal = f'=SUM(L20:L{last_service_row})'
     po_template[subtotal_cell] = subtotal
 
-    # Calculate VAT
-    vat_row = subtotal_row + 3 # first row below total
-    vat_cell = f'L{vat_row}'
-    vat = 0 # subtotal  * 0.21 #vat yet to be calculated
-    #po_template[vat_cell] = 
+    # Calculate VAT row
+    vat_row = subtotal_row + 3
 
-    # Calculate PO grand total
-    grand_total_row = vat_row + 3 # row below vat
+
+    # Calculate PO grand total cell
+    grand_total_row = subtotal_row + 6
     grand_total_cell = f'L{grand_total_row}'
-    po_template[grand_total_cell] = subtotal + vat
+    last_vat_row = vat_row + 2
+    po_template[grand_total_cell] = f'=SUM(L{subtotal_row}:L{last_vat_row})'
+    
 
     # Convert to 
     po_stream = io.BytesIO()
