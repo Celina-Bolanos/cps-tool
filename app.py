@@ -23,7 +23,7 @@ from utils.display import show_services
 st.set_page_config(page_title='CPS Processing Tool', page_icon='📝')
 st.title('📝 CPS Processing Tool')
 #st.write('Testing the automation of scan list and PO creation.')
-st.write('Welcome ALV!!!')
+st.write('Welcome - *** items_select branch *** !!!')
 
 
 # File Upload Box
